@@ -252,10 +252,12 @@ def torch2imx(
 
     LOGGER.info(f"\n{prefix} starting export with model_compression_toolkit {mct.__version__}...")
 
+    _max_pixel_value = getattr(model, "max_pixel_value", 255.0)
+
     def representative_dataset_gen(dataloader=dataset):
         for batch in dataloader:
             img = batch["img"]
-            img = img / 255.0
+            img = img / _max_pixel_value
             yield [img]
 
     # NOTE: need tpc_version to be "4.0" for IMX500 Pose estimation models

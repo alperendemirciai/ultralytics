@@ -367,13 +367,14 @@ class DetectionModel(BaseModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo26n.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize the YOLO detection model with the given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
         super().__init__()
@@ -387,6 +388,8 @@ class DetectionModel(BaseModel):
 
         # Define model
         self.yaml["channels"] = ch  # save channels
+        self.yaml["bit_depth"] = self.yaml.get("bit_depth", bit_depth)  # save bit depth
+        self.max_pixel_value = float((1 << self.yaml["bit_depth"]) - 1)  # derived from bit_depth
         if nc and nc != self.yaml["nc"]:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml["nc"] = nc  # override YAML value
@@ -530,16 +533,17 @@ class OBBModel(DetectionModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo26n-obb.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-obb.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize YOLO OBB model with given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def init_criterion(self):
         """Initialize the loss criterion for the model."""
@@ -562,16 +566,17 @@ class SegmentationModel(DetectionModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo26n-seg.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-seg.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize Ultralytics YOLO segmentation model with given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
@@ -597,7 +602,7 @@ class PoseModel(DetectionModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo26n-pose.yaml", ch=3, nc=None, data_kpt_shape=(None, None), verbose=True):
+    def __init__(self, cfg="yolo26n-pose.yaml", ch=3, nc=None, data_kpt_shape=(None, None), bit_depth=8, verbose=True):
         """Initialize Ultralytics YOLO Pose model.
 
         Args:
@@ -605,6 +610,7 @@ class PoseModel(DetectionModel):
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
             data_kpt_shape (tuple): Shape of keypoints data.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
         if not isinstance(cfg, dict):
@@ -612,7 +618,7 @@ class PoseModel(DetectionModel):
         if any(data_kpt_shape) and list(data_kpt_shape) != list(cfg["kpt_shape"]):
             LOGGER.info(f"Overriding model.yaml kpt_shape={cfg['kpt_shape']} with kpt_shape={data_kpt_shape}")
             cfg["kpt_shape"] = data_kpt_shape
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def init_criterion(self):
         """Initialize the loss criterion for the PoseModel."""
@@ -643,31 +649,35 @@ class ClassificationModel(BaseModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolo26n-cls.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolo26n-cls.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize ClassificationModel with YAML, channels, number of classes, verbose flag.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
         super().__init__()
-        self._from_yaml(cfg, ch, nc, verbose)
+        self._from_yaml(cfg, ch, nc, bit_depth, verbose)
 
-    def _from_yaml(self, cfg, ch, nc, verbose):
+    def _from_yaml(self, cfg, ch, nc, bit_depth=8, verbose=True):
         """Set Ultralytics YOLO model configurations and define the model architecture.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
         self.yaml = cfg if isinstance(cfg, dict) else yaml_model_load(cfg)  # cfg dict
 
         # Define model
         ch = self.yaml["channels"] = self.yaml.get("channels", ch)  # input channels
+        self.yaml["bit_depth"] = self.yaml.get("bit_depth", bit_depth)  # save bit depth
+        self.max_pixel_value = float((1 << self.yaml["bit_depth"]) - 1)  # derived from bit_depth
         if nc and nc != self.yaml["nc"]:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml["nc"] = nc  # override YAML value
@@ -734,16 +744,17 @@ class RTDETRDetectionModel(DetectionModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="rtdetr-l.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="rtdetr-l.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize the RTDETRDetectionModel.
 
         Args:
             cfg (str | dict): Configuration file name or path.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Print additional information during initialization.
         """
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def _apply(self, fn):
         """Apply a function to all tensors in the model, including decoder anchors and valid mask.
@@ -871,18 +882,19 @@ class WorldModel(DetectionModel):
         >>> results = model.predict(image_tensor)
     """
 
-    def __init__(self, cfg="yolov8s-world.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yolov8s-world.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize YOLOv8 world model with given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
         self.txt_feats = torch.randn(1, nc or 80, 512)  # features placeholder
         self.clip_model = None  # CLIP model placeholder
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def set_classes(self, text, batch=80, cache_clip_model=True):
         """Set classes in advance so that model could do offline-inference without clip model.
@@ -1004,16 +1016,17 @@ class YOLOEModel(DetectionModel):
         >>> results = model.predict(image_tensor, tpe=text_embeddings)
     """
 
-    def __init__(self, cfg="yoloe-v8s.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yoloe-v8s.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize YOLOE model with given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
         self.text_model = self.yaml.get("text_model", "mobileclip:blt")
 
     @smart_inference_mode()
@@ -1246,16 +1259,17 @@ class YOLOESegModel(YOLOEModel, SegmentationModel):
         >>> results = model.predict(image_tensor, tpe=text_embeddings)
     """
 
-    def __init__(self, cfg="yoloe-v8s-seg.yaml", ch=3, nc=None, verbose=True):
+    def __init__(self, cfg="yoloe-v8s-seg.yaml", ch=3, nc=None, bit_depth=8, verbose=True):
         """Initialize YOLOE segmentation model with given config and parameters.
 
         Args:
             cfg (str | dict): Model configuration file path or dictionary.
             ch (int): Number of input channels.
             nc (int, optional): Number of classes.
+            bit_depth (int): Bit depth of input images (8, 12, 14, or 16).
             verbose (bool): Whether to display model information.
         """
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+        super().__init__(cfg=cfg, ch=ch, nc=nc, bit_depth=bit_depth, verbose=verbose)
 
     def loss(self, batch, preds=None):
         """Compute loss.

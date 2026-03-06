@@ -79,7 +79,7 @@ class ClassificationTrainer(BaseTrainer):
         Returns:
             (ClassificationModel): Configured PyTorch model for classification.
         """
-        model = ClassificationModel(cfg, nc=self.data["nc"], ch=self.data["channels"], verbose=verbose and RANK == -1)
+        model = ClassificationModel(cfg, nc=self.data["nc"], ch=self.data["channels"], bit_depth=self.data.get("bit_depth", 8), verbose=verbose and RANK == -1)
         if weights:
             model.load(weights)
 
@@ -121,7 +121,7 @@ class ClassificationTrainer(BaseTrainer):
         Returns:
             (ClassificationDataset): Dataset for the specified mode.
         """
-        return ClassificationDataset(root=img_path, args=self.args, augment=mode == "train", prefix=mode)
+        return ClassificationDataset(root=img_path, args=self.args, augment=mode == "train" and getattr(self.args, "augment_train", True), prefix=mode)
 
     def get_dataloader(self, dataset_path: str, batch_size: int = 16, rank: int = 0, mode: str = "train"):
         """Return PyTorch DataLoader with transforms to preprocess images.

@@ -697,7 +697,9 @@ def create_synthetic_coco_dataset():
     LOGGER.info("Synthetic COCO dataset created successfully.")
 
 
-def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bool = False, zip: bool = False):
+def convert_to_multispectral(
+    path: str | Path, n_channels: int = 10, replace: bool = False, zip: bool = False, bit_depth: int = 8
+):
     """Convert RGB images to multispectral images by interpolating across wavelength bands.
 
     This function takes RGB images and interpolates them to create multispectral images with a specified number of
@@ -708,6 +710,7 @@ def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bo
         n_channels (int): Number of spectral channels to generate in the output image.
         replace (bool): Whether to replace the original image file with the converted one.
         zip (bool): Whether to zip the converted images into a zip file.
+        bit_depth (int): Bit depth of the output image (8 or 16). Default is 8.
 
     Examples:
         Convert a single image
@@ -744,7 +747,9 @@ def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bo
         target_wavelengths = np.linspace(450, 700, n_channels)
         f = interp1d(rgb_wavelengths.T, img, kind="linear", bounds_error=False, fill_value="extrapolate")
         multispectral = f(target_wavelengths)
-        cv2.imwritemulti(str(output_path), np.clip(multispectral, 0, 255).astype(np.uint8).transpose(2, 0, 1))
+        max_val = (1 << bit_depth) - 1
+        out_dtype = np.uint8 if bit_depth == 8 else np.uint16
+        cv2.imwritemulti(str(output_path), np.clip(multispectral, 0, max_val).astype(out_dtype).transpose(2, 0, 1))
         LOGGER.info(f"Converted {output_path}")
 
 

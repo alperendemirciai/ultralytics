@@ -37,6 +37,22 @@ from ultralytics.utils.downloads import download, safe_download, unzip_file
 from ultralytics.utils.ops import segments2boxes
 
 HELP_URL = "See https://docs.ultralytics.com/datasets for dataset formatting guidance."
+
+_VALID_BIT_DEPTHS = {8, 12, 14, 16}
+
+
+def max_pixel_value(bit_depth: int = 8) -> float:
+    """Return max pixel value for a given bit depth (255.0, 4095.0, 16383.0, 65535.0).
+
+    Args:
+        bit_depth (int): Bit depth of the image. Valid values are 8, 12, 14, 16.
+
+    Returns:
+        (float): Maximum pixel value for the given bit depth.
+    """
+    if bit_depth not in _VALID_BIT_DEPTHS:
+        raise ValueError(f"bit_depth must be one of {_VALID_BIT_DEPTHS}, got {bit_depth}")
+    return float((1 << bit_depth) - 1)
 IMG_FORMATS = {
     "avif",
     "bmp",
@@ -444,6 +460,7 @@ def check_det_dataset(dataset: str, autodownload: bool = True) -> dict[str, Any]
 
     data["names"] = check_class_names(data["names"])
     data["channels"] = data.get("channels", 3)  # get image channels, default to 3
+    data["bit_depth"] = data.get("bit_depth", 8)  # get image bit depth, default to 8
 
     # Resolve paths
     path = Path(extract_dir or data.get("path") or Path(data.get("yaml_file", "")).parent)  # dataset root
@@ -585,7 +602,7 @@ def check_cls_dataset(dataset: str | Path, split: str = "") -> dict[str, Any]:
             else:
                 LOGGER.info(f"{prefix} found {nf} images in {nd} classes ✅ ")
 
-    return {"train": train_set, "val": val_set, "test": test_set, "nc": nc, "names": names, "channels": 3}
+    return {"train": train_set, "val": val_set, "test": test_set, "nc": nc, "names": names, "channels": 3, "bit_depth": 8}
 
 
 class HUBDatasetStats:

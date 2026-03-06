@@ -52,7 +52,7 @@ class RTDETRTrainer(DetectionTrainer):
         Returns:
             (RTDETRDetectionModel): Initialized model.
         """
-        model = RTDETRDetectionModel(cfg, nc=self.data["nc"], ch=self.data["channels"], verbose=verbose and RANK == -1)
+        model = RTDETRDetectionModel(cfg, nc=self.data["nc"], ch=self.data["channels"], bit_depth=self.data.get("bit_depth", 8), verbose=verbose and RANK == -1)
         if weights:
             model.load(weights)
         return model
@@ -72,7 +72,7 @@ class RTDETRTrainer(DetectionTrainer):
             img_path=img_path,
             imgsz=self.args.imgsz,
             batch_size=batch,
-            augment=mode == "train",
+            augment=mode == "train" and getattr(self.args, "augment_train", True),
             hyp=self.args,
             rect=False,
             cache=self.args.cache or None,

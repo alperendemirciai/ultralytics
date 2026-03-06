@@ -85,6 +85,7 @@ class BaseDataset(Dataset):
         classes: list[int] | None = None,
         fraction: float = 1.0,
         channels: int = 3,
+        bit_depth: int = 8,
     ):
         """Initialize BaseDataset with given configuration and options.
 
@@ -104,6 +105,7 @@ class BaseDataset(Dataset):
             fraction (float): Fraction of dataset to utilize.
             channels (int): Number of channels in the images (1 for grayscale, 3 for color). Color images loaded with
                 OpenCV are in BGR channel order.
+            bit_depth (int): Bit depth of the images (8, 12, 14, or 16). Default is 8.
         """
         super().__init__()
         self.img_path = img_path
@@ -113,7 +115,14 @@ class BaseDataset(Dataset):
         self.prefix = prefix
         self.fraction = fraction
         self.channels = channels
-        self.cv2_flag = cv2.IMREAD_GRAYSCALE if channels == 1 else cv2.IMREAD_COLOR
+        self.bit_depth = bit_depth
+        self.max_pixel_value = float((1 << bit_depth) - 1)
+        if channels == 1 and bit_depth == 8:
+            self.cv2_flag = cv2.IMREAD_GRAYSCALE
+        elif channels == 3 and bit_depth == 8:
+            self.cv2_flag = cv2.IMREAD_COLOR
+        else:
+            self.cv2_flag = cv2.IMREAD_ANYDEPTH | cv2.IMREAD_UNCHANGED
         self.im_files = self.get_img_files(self.img_path)
         self.labels = self.get_labels()
         self.update_labels(include_class=classes)  # single_cls and include_class

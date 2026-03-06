@@ -70,6 +70,7 @@ class YOLOETrainer(DetectionTrainer):
             cfg["yaml_file"] if isinstance(cfg, dict) else cfg,
             ch=self.data["channels"],
             nc=min(self.data["nc"], 80),
+            bit_depth=self.data.get("bit_depth", 8),
             verbose=verbose and RANK == -1,
         )
         if weights:
@@ -128,6 +129,7 @@ class YOLOEPETrainer(DetectionTrainer):
             cfg["yaml_file"] if isinstance(cfg, dict) else cfg,
             ch=self.data["channels"],
             nc=self.data["nc"],
+            bit_depth=self.data.get("bit_depth", 8),
             verbose=verbose and RANK == -1,
         )
 

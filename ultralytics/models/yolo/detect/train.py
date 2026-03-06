@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 
 from ultralytics.data import build_dataloader, build_yolo_dataset
+from ultralytics.data.utils import max_pixel_value
 from ultralytics.engine.trainer import BaseTrainer
 from ultralytics.models import yolo
 from ultralytics.nn.tasks import DetectionModel
@@ -116,7 +117,7 @@ class DetectionTrainer(BaseTrainer):
         for k, v in batch.items():
             if isinstance(v, torch.Tensor):
                 batch[k] = v.to(self.device, non_blocking=self.device.type == "cuda")
-        batch["img"] = batch["img"].float() / 255
+        batch["img"] = batch["img"].float() / max_pixel_value(self.data.get("bit_depth", 8))
         if self.args.multi_scale > 0.0:
             imgs = batch["img"]
             sz = (
@@ -160,7 +161,7 @@ class DetectionTrainer(BaseTrainer):
         Returns:
             (DetectionModel): YOLO detection model.
         """
-        model = DetectionModel(cfg, nc=self.data["nc"], ch=self.data["channels"], verbose=verbose and RANK == -1)
+        model = DetectionModel(cfg, nc=self.data["nc"], ch=self.data["channels"], bit_depth=self.data.get("bit_depth", 8), verbose=verbose and RANK == -1)
         if weights:
             model.load(weights)
         return model

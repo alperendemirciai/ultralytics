@@ -588,7 +588,8 @@ class Mosaic(BaseMixTransform):
 
             # Place img in img3
             if i == 0:  # center
-                img3 = np.full((s * 3, s * 3, img.shape[2]), 114, dtype=np.uint8)  # base image with 3 tiles
+                _fill = int(114 / 255.0 * getattr(self.dataset, "max_pixel_value", 255.0))
+                img3 = np.full((s * 3, s * 3, img.shape[2]), _fill, dtype=img.dtype)  # base image with 3 tiles
                 h0, w0 = h, w
                 c = s, s, s + w, s + h  # xmin, ymin, xmax, ymax (base) coordinates
             elif i == 1:  # right
@@ -645,7 +646,8 @@ class Mosaic(BaseMixTransform):
 
             # Place img in img4
             if i == 0:  # top left
-                img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
+                _fill = int(114 / 255.0 * getattr(self.dataset, "max_pixel_value", 255.0))
+                img4 = np.full((s * 2, s * 2, img.shape[2]), _fill, dtype=img.dtype)  # base image with 4 tiles
                 x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc  # xmin, ymin, xmax, ymax (large image)
                 x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h  # xmin, ymin, xmax, ymax (small image)
             elif i == 1:  # top right
@@ -705,7 +707,8 @@ class Mosaic(BaseMixTransform):
 
             # Place img in img9
             if i == 0:  # center
-                img9 = np.full((s * 3, s * 3, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
+                _fill = int(114 / 255.0 * getattr(self.dataset, "max_pixel_value", 255.0))
+                img9 = np.full((s * 3, s * 3, img.shape[2]), _fill, dtype=img.dtype)  # base image with 4 tiles
                 h0, w0 = h, w
                 c = s, s, s + w, s + h  # xmin, ymin, xmax, ymax (base) coordinates
             elif i == 1:  # top
@@ -869,7 +872,7 @@ class MixUp(BaseMixTransform):
         """
         r = np.random.beta(32.0, 32.0)  # mixup ratio, alpha=beta=32.0
         labels2 = labels["mix_labels"][0]
-        labels["img"] = (labels["img"] * r + labels2["img"] * (1 - r)).astype(np.uint8)
+        labels["img"] = (labels["img"] * r + labels2["img"] * (1 - r)).astype(labels["img"].dtype)
         labels["instances"] = Instances.concatenate([labels["instances"], labels2["instances"]], axis=0)
         labels["cls"] = np.concatenate([labels["cls"], labels2["cls"]], 0)
         return labels
@@ -1403,7 +1406,7 @@ class RandomHSV:
             >>> augmented_img = labels["img"]
         """
         img = labels["img"]
-        if img.shape[-1] != 3:  # only apply to RGB images
+        if img.shape[-1] != 3 or img.dtype != np.uint8:  # only apply to 3-channel uint8 images
             return labels
         if self.hgain or self.sgain or self.vgain:
             dtype = img.dtype  # uint8
@@ -1932,7 +1935,7 @@ class Albumentations:
             return labels
 
         im = labels["img"]
-        if im.shape[2] != 3:  # Only apply Albumentation on 3-channel images
+        if im.shape[2] != 3 or im.dtype != np.uint8:  # Only apply Albumentation on 3-channel uint8 images
             return labels
 
         if self.contains_spatial:
@@ -2770,7 +2773,7 @@ class ToTensor:
         The output tensor will be in BGR format with shape (C, H, W), normalized to [0, 1].
     """
 
-    def __init__(self, half: bool = False):
+    def __init__(self, half: bool = False, max_pixel_value: float = 255.0):
         """Initialize the ToTensor object for converting images to PyTorch tensors.
 
         This class is designed to be used as part of a transformation pipeline for image preprocessing in the
@@ -2779,9 +2782,11 @@ class ToTensor:
 
         Args:
             half (bool): If True, converts the tensor to half precision (float16).
+            max_pixel_value (float): Maximum pixel value for normalization (255.0 for 8-bit, 65535.0 for 16-bit, etc.).
         """
         super().__init__()
         self.half = half
+        self.max_pixel_value = max_pixel_value
 
     def __call__(self, im: np.ndarray) -> torch.Tensor:
         """Transform an image from a numpy array to a PyTorch tensor.
@@ -2805,6 +2810,6 @@ class ToTensor:
         """
         im = np.ascontiguousarray(im.transpose((2, 0, 1)))  # HWC to CHW -> contiguous
         im = torch.from_numpy(im)  # to torch
-        im = im.half() if self.half else im.float()  # uint8 to fp16/32
-        im /= 255.0  # 0-255 to 0.0-1.0
+        im = im.half() if self.half else im.float()  # uint8/uint16 to fp16/32
+        im /= self.max_pixel_value  # 0-max to 0.0-1.0
         return im

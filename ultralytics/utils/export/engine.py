@@ -176,11 +176,13 @@ def onnx2engine(
                 self,
                 dataset,  # ultralytics.data.build.InfiniteDataLoader
                 cache: str = "",
+                max_pixel_value: float = 255.0,
             ) -> None:
                 """Initialize the INT8 calibrator with dataset and cache path."""
                 trt.IInt8Calibrator.__init__(self)
                 self.dataset = dataset
                 self.data_iter = iter(dataset)
+                self.max_pixel_value = max_pixel_value
                 self.algo = (
                     trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2  # DLA quantization needs ENTROPY_CALIBRATION_2
                     if dla is not None
@@ -200,7 +202,7 @@ def onnx2engine(
             def get_batch(self, names) -> list[int] | None:
                 """Get the next batch to use for calibration, as a list of device memory pointers."""
                 try:
-                    im0s = next(self.data_iter)["img"] / 255.0
+                    im0s = next(self.data_iter)["img"] / self.max_pixel_value
                     im0s = im0s.to("cuda") if im0s.device.type == "cpu" else im0s
                     return [int(im0s.data_ptr())]
                 except StopIteration:
@@ -217,9 +219,11 @@ def onnx2engine(
                 _ = self.cache.write_bytes(cache)
 
         # Load dataset w/ builder (for batching) and calibrate
+        _bd = metadata.get("bit_depth", 8) if isinstance(metadata, dict) else 8
         config.int8_calibrator = EngineCalibrator(
             dataset=dataset,
             cache=str(Path(onnx_file).with_suffix(".cache")),
+            max_pixel_value=float((1 << _bd) - 1),
         )
 
     elif half:

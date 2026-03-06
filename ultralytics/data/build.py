@@ -237,7 +237,7 @@ def build_yolo_dataset(
         img_path=img_path,
         imgsz=cfg.imgsz,
         batch_size=batch,
-        augment=mode == "train",  # augmentation
+        augment=mode == "train" and getattr(cfg, "augment_train", True),  # augmentation
         hyp=cfg,  # TODO: probably add a get_hyps_from_cfg function
         rect=cfg.rect or rect,  # rectangular batches
         cache=cfg.cache or None,
@@ -269,7 +269,7 @@ def build_grounding(
         max_samples=max_samples,
         imgsz=cfg.imgsz,
         batch_size=batch,
-        augment=mode == "train",  # augmentation
+        augment=mode == "train" and getattr(cfg, "augment_train", True),  # augmentation
         hyp=cfg,  # TODO: probably add a get_hyps_from_cfg function
         rect=cfg.rect or rect,  # rectangular batches
         cache=cfg.cache or None,

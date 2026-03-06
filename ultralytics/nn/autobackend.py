@@ -199,7 +199,7 @@ class AutoBackend(nn.Module):
         ) = self._model_type("" if nn_module else model)
         fp16 &= pt or jit or onnx or xml or engine or nn_module or triton  # FP16
         nhwc = coreml or saved_model or pb or tflite or edgetpu or rknn  # BHWC formats (vs torch BCHW)
-        stride, ch = 32, 3  # default stride and channels
+        stride, ch, bit_depth = 32, 3, 8  # default stride, channels, and bit depth
         end2end, dynamic = False, False
         metadata, task = None, None
 
@@ -234,6 +234,7 @@ class AutoBackend(nn.Module):
             names = model.module.names if hasattr(model, "module") else model.names  # get class names
             model.half() if fp16 else model.float()
             ch = model.yaml.get("channels", 3)
+            bit_depth = model.yaml.get("bit_depth", 8)
             for p in model.parameters():
                 p.requires_grad = False
             self.model = model  # explicitly assign for to(), cpu(), cuda(), half()
@@ -662,7 +663,7 @@ class AutoBackend(nn.Module):
             metadata = YAML.load(metadata)
         if metadata and isinstance(metadata, dict):
             for k, v in metadata.items():
-                if k in {"stride", "batch", "channels"}:
+                if k in {"stride", "batch", "channels", "bit_depth"}:
                     metadata[k] = int(v)
                 elif k in {"imgsz", "names", "kpt_shape", "kpt_names", "args", "end2end"} and isinstance(v, str):
                     metadata[k] = ast.literal_eval(v)
@@ -676,6 +677,7 @@ class AutoBackend(nn.Module):
             end2end = metadata.get("end2end", False) or metadata.get("args", {}).get("nms", False)
             dynamic = metadata.get("args", {}).get("dynamic", dynamic)
             ch = metadata.get("channels", 3)
+            bit_depth = metadata.get("bit_depth", 8)
         elif not (pt or triton or nn_module):
             LOGGER.warning(f"Metadata not found for 'model={w}'")
 
@@ -685,6 +687,7 @@ class AutoBackend(nn.Module):
         names = check_class_names(names)
 
         self.__dict__.update(locals())  # assign all variables to self
+        self.max_pixel_value = float((1 << self.bit_depth) - 1)  # derived from bit_depth
 
     def forward(
         self,

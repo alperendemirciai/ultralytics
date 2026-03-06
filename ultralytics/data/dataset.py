@@ -85,7 +85,7 @@ class YOLODataset(BaseDataset):
         self.use_obb = task == "obb"
         self.data = data
         assert not (self.use_segments and self.use_keypoints), "Can not use both segments and keypoints."
-        super().__init__(*args, channels=self.data.get("channels", 3), **kwargs)
+        super().__init__(*args, channels=self.data.get("channels", 3), bit_depth=self.data.get("bit_depth", 8), **kwargs)
 
     def cache_labels(self, path: Path = Path("./labels.cache")) -> dict:
         """Cache dataset labels, check images and read shapes.
@@ -436,7 +436,7 @@ class GroundingDataset(YOLODataset):
         assert task in {"detect", "segment"}, "GroundingDataset currently only supports `detect` and `segment` tasks"
         self.json_file = json_file
         self.max_samples = max_samples
-        super().__init__(*args, task=task, data={"channels": 3}, **kwargs)
+        super().__init__(*args, task=task, data={"channels": 3, "bit_depth": 8}, **kwargs)
 
     def get_img_files(self, img_path: str) -> list:
         """The image files would be read in `get_labels` function, return empty list here.

@@ -565,6 +565,7 @@ class Exporter:
             "names": model.names,
             "args": {k: v for k, v in self.args if k in fmt_keys},
             "channels": model.yaml.get("channels", 3),
+            "bit_depth": model.yaml.get("bit_depth", 8),
             "end2end": getattr(model, "end2end", False),
         }  # model metadata
         if dla is not None:
@@ -781,7 +782,7 @@ class Exporter:
             ov_model.set_rt_info("YOLO", ["model_info", "model_type"])
             ov_model.set_rt_info(True, ["model_info", "reverse_input_channels"])
             ov_model.set_rt_info(114, ["model_info", "pad_value"])
-            ov_model.set_rt_info([255.0], ["model_info", "scale_values"])
+            ov_model.set_rt_info([float((1 << self.model.yaml.get("bit_depth", 8)) - 1)], ["model_info", "scale_values"])
             ov_model.set_rt_info(self.args.iou, ["model_info", "iou_threshold"])
             ov_model.set_rt_info([v.replace(" ", "_") for v in self.model.names.values()], ["model_info", "labels"])
             if self.model.task != "classify":
@@ -961,7 +962,8 @@ class Exporter:
             )
             inputs = [ct.TensorType("image", shape=input_shape)]
         else:
-            inputs = [ct.ImageType("image", shape=self.im.shape, scale=1 / 255, bias=[0.0, 0.0, 0.0])]
+            _mpv = float((1 << self.model.yaml.get("bit_depth", 8)) - 1)
+            inputs = [ct.ImageType("image", shape=self.im.shape, scale=1 / _mpv, bias=[0.0, 0.0, 0.0])]
 
         # Based on apple's documentation it is better to leave out the minimum_deployment target and let that get set
         # Internally based on the model conversion and output type.

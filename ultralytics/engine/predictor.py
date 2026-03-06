@@ -169,7 +169,7 @@ class BasePredictor:
         im = im.to(self.device)
         im = im.half() if self.model.fp16 else im.float()  # uint8 to fp16/32
         if not_tensor:
-            im /= 255  # 0 - 255 to 0.0 - 1.0
+            im /= getattr(self.model, "max_pixel_value", 255.0)  # 0 - max to 0.0 - 1.0
         return im
 
     def inference(self, im: torch.Tensor, *args, **kwargs):
