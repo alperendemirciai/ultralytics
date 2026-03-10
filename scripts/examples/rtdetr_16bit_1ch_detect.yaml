@@ -1,0 +1,17 @@
+# Inference config for single-channel 16-bit RT-DETR.
+
+imgsz: 640
+device: ""
+
+conf: 0.25
+iou: 0.7
+max_det: 300
+half: false
+
+save: true
+save_txt: false
+save_conf: false
+show: false
+show_labels: true
+show_conf: true
+show_boxes: true

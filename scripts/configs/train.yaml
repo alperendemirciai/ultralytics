@@ -1,0 +1,59 @@
+# Training configuration
+# Passed directly to model.train(). Keys match Ultralytics default.yaml.
+# See ultralytics/cfg/default.yaml for the full list and descriptions.
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+epochs: 100               # number of training epochs
+batch: 16                 # batch size (int) or fraction of GPU memory (0.0–1.0)
+imgsz: 640                # input image size (square int, or [h, w] list)
+device: ""                # "" = auto-select; "cpu"; "0" / "0,1" for GPU(s)
+workers: 8                # dataloader workers per rank
+
+# ── Checkpointing ─────────────────────────────────────────────────────────────
+save: true                # save checkpoints and prediction results
+save_period: -1           # save checkpoint every N epochs; -1 = only best/last
+
+# ── Early stopping ────────────────────────────────────────────────────────────
+patience: 100             # epochs without improvement before early stop
+
+# ── Optimizer ─────────────────────────────────────────────────────────────────
+optimizer: auto           # SGD | Adam | AdamW | NAdam | RAdam | RMSProp | auto
+lr0: 0.01                 # initial learning rate
+lrf: 0.01                 # final LR fraction  (final_lr = lr0 * lrf)
+momentum: 0.937           # SGD momentum / Adam beta1
+weight_decay: 0.0005      # L2 regularisation
+
+# ── Warmup ────────────────────────────────────────────────────────────────────
+warmup_epochs: 3.0        # warmup duration (fractions allowed)
+warmup_momentum: 0.8      # initial momentum during warmup
+warmup_bias_lr: 0.1       # bias LR during warmup
+
+# ── Augmentation ──────────────────────────────────────────────────────────────
+augment_train: true       # enable v8-style augmentation (Mosaic, MixUp, HSV…)
+                          # set false for multispectral / high-bit-depth data
+close_mosaic: 10          # disable Mosaic for the last N epochs (0 = always on)
+mosaic: 1.0               # Mosaic augmentation probability
+mixup: 0.0                # MixUp augmentation probability
+hsv_h: 0.015              # HSV hue augmentation fraction
+hsv_s: 0.7                # HSV saturation augmentation fraction
+hsv_v: 0.4                # HSV value augmentation fraction
+degrees: 0.0              # rotation degrees (+/-)
+translate: 0.1            # translation fraction (+/-)
+scale: 0.5                # scale gain (+/-)
+shear: 0.0                # shear degrees (+/-)
+perspective: 0.0          # perspective fraction
+flipud: 0.0               # vertical flip probability
+fliplr: 0.5               # horizontal flip probability
+
+# ── Loss weights ──────────────────────────────────────────────────────────────
+box: 7.5                  # box loss gain
+cls: 0.5                  # classification loss gain
+dfl: 1.5                  # distribution focal loss gain
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+amp: true                 # Automatic Mixed Precision
+pretrained: true          # use pretrained backbone weights
+seed: 0                   # random seed
+verbose: true             # print verbose logs
+plots: true               # save training plots
+val: true                 # run validation after each epoch

@@ -1,0 +1,32 @@
+# Example dataset YAML for single-channel (grayscale), 16-bit images with RT-DETR.
+#
+# Directory layout expected:
+#
+#   /data/my_16bit_1ch/
+#   ├── images/
+#   │   ├── train/      ← 16-bit single-channel TIFF images  (e.g. *.tif)
+#   │   └── val/
+#   └── labels/
+#       ├── train/      ← YOLO-format .txt files (one per image)
+#       └── val/
+#
+# Label format (YOLO xywhn, one object per line):
+#   <class_id> <x_center> <y_center> <width> <height>
+#   All values normalised to [0, 1].
+
+path: /data/my_16bit_1ch      # root dataset directory (absolute or relative to CWD)
+train: images/train
+val: images/val
+
+nc: 2                          # number of object classes
+names:
+  0: defect_a
+  1: defect_b
+
+# ── Extended bit-depth / channel settings (added in this repo) ────────────────
+channels: 1       # 1 = single-channel (grayscale / thermal / depth)
+bit_depth: 16     # valid values: 8 (default), 12, 14, 16
+
+# ── Disable HSV / Mosaic augmentation (meaningless for single-channel data) ───
+# You can set this here OR pass augment_train=false on the CLI / in train.yaml.
+# augment_train: false

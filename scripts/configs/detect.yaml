@@ -1,0 +1,37 @@
+# Inference / detection configuration
+# Passed directly to model.predict(). Keys match Ultralytics default.yaml.
+# See ultralytics/cfg/default.yaml for the full list and descriptions.
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+imgsz: 640                # input image size
+device: ""                # "" = auto-select; "cpu"; "0" / "0,1" for GPU(s)
+
+# ── Detection thresholds ──────────────────────────────────────────────────────
+conf: 0.25                # confidence threshold (predictions below this are dropped)
+iou: 0.7                  # IoU threshold for NMS
+max_det: 300              # maximum detections per image
+agnostic_nms: false       # class-agnostic NMS
+
+# ── Precision ─────────────────────────────────────────────────────────────────
+half: false               # FP16 inference
+
+# ── Output ────────────────────────────────────────────────────────────────────
+save: true                # save annotated images / videos
+save_txt: false           # save detections as .txt (YOLO xywh format)
+save_conf: false          # include confidence scores in .txt output
+save_crop: false          # save cropped detection regions
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
+show: false               # display results in a window (requires display)
+show_labels: true         # draw class labels on output images
+show_conf: true           # draw confidence scores on output images
+show_boxes: true          # draw bounding boxes on output images
+line_width:               # box line width; null = auto-scale with image size
+
+# ── Video ─────────────────────────────────────────────────────────────────────
+vid_stride: 1             # process every Nth frame
+stream_buffer: false      # buffer all frames (true) or keep latest (false)
+
+# ── Advanced ──────────────────────────────────────────────────────────────────
+augment: false            # test-time augmentation (TTA)
+classes:                  # filter by class id(s), e.g. [0, 1] or null for all

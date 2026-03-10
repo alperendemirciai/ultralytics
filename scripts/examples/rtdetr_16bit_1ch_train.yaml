@@ -1,0 +1,29 @@
+# Training config tailored for single-channel 16-bit RT-DETR.
+# Inherits from scripts/configs/train.yaml but disables augmentations
+# that are meaningless for non-RGB or high-bit-depth imagery.
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+epochs: 100
+batch: 8                  # smaller batch — 16-bit images use 2× memory vs uint8
+imgsz: 640
+device: ""
+workers: 8
+
+# ── Augmentation ──────────────────────────────────────────────────────────────
+augment_train: false      # disable Mosaic / MixUp / HSV — not useful for 1-ch 16-bit
+                          # training will use LetterBox-only pre-processing (same as val)
+
+# ── Optimizer ─────────────────────────────────────────────────────────────────
+optimizer: AdamW
+lr0: 0.0001               # RT-DETR typically trains better with a lower LR than YOLO
+lrf: 0.01
+weight_decay: 0.0001
+warmup_epochs: 2.0
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+amp: true
+pretrained: true
+seed: 42
+plots: true
+val: true
+patience: 50

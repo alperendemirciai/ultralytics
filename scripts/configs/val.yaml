@@ -1,0 +1,25 @@
+# Validation configuration
+# Passed directly to model.val(). Keys match Ultralytics default.yaml.
+# See ultralytics/cfg/default.yaml for the full list and descriptions.
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+imgsz: 640                # input image size (must match training imgsz)
+batch: 16                 # batch size
+device: ""                # "" = auto-select; "cpu"; "0" / "0,1" for GPU(s)
+workers: 8                # dataloader workers
+
+# ── Detection thresholds ──────────────────────────────────────────────────────
+conf: 0.001               # confidence threshold (low value = evaluate all preds)
+iou: 0.7                  # IoU threshold for NMS
+max_det: 300              # maximum detections per image
+
+# ── Precision ─────────────────────────────────────────────────────────────────
+half: false               # FP16 inference (faster on GPU, slight accuracy loss)
+
+# ── Dataset split ─────────────────────────────────────────────────────────────
+split: val                # dataset split to evaluate: 'val', 'test', or 'train'
+
+# ── Output ────────────────────────────────────────────────────────────────────
+plots: true               # save confusion matrix, P-R curve, etc.
+save_json: false          # save predictions to COCO-format JSON
+verbose: true
