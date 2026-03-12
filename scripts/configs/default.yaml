@@ -127,11 +127,6 @@ copy_paste_mode: flip # (str) copy-paste strategy for segmentation: flip or mixu
 auto_augment: randaugment # (str) classification auto augmentation policy: randaugment, autoaugment, augmix
 erasing: 0.4 # (float) random erasing probability for classification (0.0–1.0)
 
-# Image preprocessing --------------------------------------------------------------------------------------------------
-img_preprocessing: # (str, optional) preprocessing method applied to images before augmentation: 'clahe', 'histogram_eq', 'minmax', or null (default: range norm by bit depth)
-clahe_clip_limit: 2.0 # (float) CLAHE clip limit; higher values allow more contrast enhancement
-clahe_tile_size: 8 # (int) CLAHE tile grid size (NxN tiles)
-
 # Custom config.yaml ---------------------------------------------------------------------------------------------------
 cfg: # (str, optional) path to a config.yaml that overrides defaults
 

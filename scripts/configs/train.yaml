@@ -1,17 +1,18 @@
 # Training configuration
 # Passed directly to model.train(). Keys match Ultralytics default.yaml.
 # See ultralytics/cfg/default.yaml for the full list and descriptions.
-
+task: detect # (str) YOLO task, i.e. detect, segment, classify, pose, obb
+mode: train 
 # ── Core ──────────────────────────────────────────────────────────────────────
-epochs: 100               # number of training epochs
-batch: 16                 # batch size (int) or fraction of GPU memory (0.0–1.0)
+epochs: 500               # number of training epochs
+batch: 8                 # batch size (int) or fraction of GPU memory (0.0–1.0)
 imgsz: 640                # input image size (square int, or [h, w] list)
 device: ""                # "" = auto-select; "cpu"; "0" / "0,1" for GPU(s)
 workers: 8                # dataloader workers per rank
 
 # ── Checkpointing ─────────────────────────────────────────────────────────────
 save: true                # save checkpoints and prediction results
-save_period: -1           # save checkpoint every N epochs; -1 = only best/last
+save_period: 3           # save checkpoint every N epochs; -1 = only best/last
 
 # ── Early stopping ────────────────────────────────────────────────────────────
 patience: 100             # epochs without improvement before early stop
@@ -31,19 +32,24 @@ warmup_bias_lr: 0.1       # bias LR during warmup
 # ── Augmentation ──────────────────────────────────────────────────────────────
 augment_train: true       # enable v8-style augmentation (Mosaic, MixUp, HSV…)
                           # set false for multispectral / high-bit-depth data
-close_mosaic: 10          # disable Mosaic for the last N epochs (0 = always on)
-mosaic: 1.0               # Mosaic augmentation probability
+close_mosaic: 190          # disable Mosaic for the last N epochs (0 = always on)
+mosaic: 0.5               # Mosaic augmentation probability
 mixup: 0.0                # MixUp augmentation probability
-hsv_h: 0.015              # HSV hue augmentation fraction
-hsv_s: 0.7                # HSV saturation augmentation fraction
-hsv_v: 0.4                # HSV value augmentation fraction
-degrees: 0.0              # rotation degrees (+/-)
-translate: 0.1            # translation fraction (+/-)
+hsv_h: 0.0              # HSV hue augmentation fraction
+hsv_s: 0.0               # HSV saturation augmentation fraction
+hsv_v: 0.0                # HSV value augmentation fraction
+degrees: 0.1              # rotation degrees (+/-)
+translate: 0.0            # translation fraction (+/-)
 scale: 0.5                # scale gain (+/-)
 shear: 0.0                # shear degrees (+/-)
 perspective: 0.0          # perspective fraction
-flipud: 0.0               # vertical flip probability
+flipud: 0.5               # vertical flip probability
 fliplr: 0.5               # horizontal flip probability
+
+# ── Image Preprocessing ────────────────────────────────────────────────────────
+img_preprocessing: clahe        # clahe | histogram_eq | minmax | (blank = range norm by bit depth)
+clahe_clip_limit: 20.0     # CLAHE clip limit (higher = more contrast enhancement)
+clahe_tile_size: 8        # CLAHE tile grid size (NxN)
 
 # ── Loss weights ──────────────────────────────────────────────────────────────
 box: 7.5                  # box loss gain
@@ -51,7 +57,7 @@ cls: 0.5                  # classification loss gain
 dfl: 1.5                  # distribution focal loss gain
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
-amp: true                 # Automatic Mixed Precision
+amp: false                 # Automatic Mixed Precision
 pretrained: true          # use pretrained backbone weights
 seed: 0                   # random seed
 verbose: true             # print verbose logs

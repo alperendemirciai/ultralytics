@@ -117,7 +117,12 @@ class DetectionTrainer(BaseTrainer):
         for k, v in batch.items():
             if isinstance(v, torch.Tensor):
                 batch[k] = v.to(self.device, non_blocking=self.device.type == "cuda")
-        batch["img"] = batch["img"].float() / max_pixel_value(self.data.get("bit_depth", 8))
+        if getattr(self.args, "img_preprocessing", None) == "minmax":
+            from ultralytics.data.preprocessing import apply_minmax_normalization
+
+            batch["img"] = apply_minmax_normalization(batch["img"].float())
+        else:
+            batch["img"] = batch["img"].float() / max_pixel_value(self.data.get("bit_depth", 8))
         if self.args.multi_scale > 0.0:
             imgs = batch["img"]
             sz = (

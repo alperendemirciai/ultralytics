@@ -8,8 +8,8 @@ Usage:
         --save-dir runs/my_rtdetr_experiment
 
     python scripts/train_rtdetr.py \
-        --dataset-yaml /Users/alperendemirci/Documents/GitHub/ultralytics/IRSTD_DATASETS/IRSTD-1K-YOLO_1ch_14bit/dataset.yaml \
-        --train-cfg /Users/alperendemirci/Documents/GitHub/ultralytics/scripts/configs/train.yaml \
+        --dataset-yaml /home/alperen/Documents/ultralytics/IRSTD-1K-YOLO_1ch_14bit/dataset.yaml \
+        --train-cfg /home/alperen/Documents/ultralytics/scripts/configs/train.yaml \
         --model rtdetr-l.yaml \
         --save-dir runs/my_rtdetr_experiment
 """

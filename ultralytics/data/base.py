@@ -117,6 +117,10 @@ class BaseDataset(Dataset):
         self.channels = channels
         self.bit_depth = bit_depth
         self.max_pixel_value = float((1 << bit_depth) - 1)
+        # Preprocessing config (CLAHE, histogram equalization, or per-image minmax)
+        self.img_preprocessing = getattr(hyp, "img_preprocessing", None)
+        self.clahe_clip_limit = float(getattr(hyp, "clahe_clip_limit", 2.0))
+        self.clahe_tile_size = int(getattr(hyp, "clahe_tile_size", 8))
         if channels == 1 and bit_depth == 8:
             self.cv2_flag = cv2.IMREAD_GRAYSCALE
         elif channels == 3 and bit_depth == 8:
@@ -255,6 +259,18 @@ class BaseDataset(Dataset):
                 im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
             if im.ndim == 2:
                 im = im[..., None]
+
+            # Apply spatial preprocessing (CLAHE or histogram equalization)
+            if self.img_preprocessing in ("clahe", "histogram_eq"):
+                from ultralytics.data.preprocessing import apply_spatial_preprocessing
+
+                im = apply_spatial_preprocessing(
+                    im,
+                    method=self.img_preprocessing,
+                    clip_limit=self.clahe_clip_limit,
+                    tile_size=self.clahe_tile_size,
+                    bit_depth=self.bit_depth,
+                )
 
             # Add to buffer if training with augmentations
             if self.augment:
