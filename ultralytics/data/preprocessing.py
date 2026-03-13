@@ -9,6 +9,30 @@ _NORM_METHODS = {"minmax"}
 VALID_METHODS = _SPATIAL_METHODS | _NORM_METHODS | {None}
 
 
+def _clahe_channel_u16(ch: np.ndarray, clahe, bit_depth: int) -> np.ndarray:
+    """Apply CLAHE to a single uint16 channel, handling sub-16-bit data.
+
+    OpenCV CLAHE on uint16 maps output to the full 0–65535 range. For sub-16-bit
+    data (e.g. 14-bit values in 0–16383) we must scale up to fill uint16 before
+    CLAHE, then scale back down, so the result stays within the original bit range.
+
+    Args:
+        ch (np.ndarray): 2D uint16 array (H, W).
+        clahe: cv2.CLAHE object.
+        bit_depth (int): Actual bit depth of the data (8, 12, 14, or 16).
+
+    Returns:
+        (np.ndarray): CLAHE-enhanced uint16 channel in the original bit-depth range.
+    """
+    shift = 16 - bit_depth  # e.g. 2 for 14-bit, 4 for 12-bit, 0 for 16-bit
+    if shift > 0:
+        ch = ch << shift  # scale 0–16383 → 0–65535
+    ch = clahe.apply(ch)  # CLAHE operates on full uint16 range
+    if shift > 0:
+        ch = ch >> shift  # scale back to 0–16383
+    return ch
+
+
 def apply_clahe(im: np.ndarray, clip_limit: float = 2.0, tile_size: int = 8, bit_depth: int = 8) -> np.ndarray:
     """Apply CLAHE to a HWC numpy array (uint8 or uint16).
 
@@ -18,6 +42,10 @@ def apply_clahe(im: np.ndarray, clip_limit: float = 2.0, tile_size: int = 8, bit
       the L (lightness) channel only, then converts back to preserve color balance.
     For 3-channel uint16 images: applies CLAHE per-channel (OpenCV LAB conversion
       does not support uint16).
+
+    Note: For sub-16-bit data stored in uint16 containers (e.g. 14-bit in uint16),
+    channels are scaled to the full uint16 range before CLAHE and scaled back after,
+    so the output stays within the original bit-depth range.
 
     Args:
         im (np.ndarray): HWC image array, uint8 or uint16, shape (H, W, C).
@@ -32,7 +60,10 @@ def apply_clahe(im: np.ndarray, clip_limit: float = 2.0, tile_size: int = 8, bit
     c = im.shape[2]
 
     if c == 1:
-        im[:, :, 0] = clahe.apply(im[:, :, 0])
+        if im.dtype == np.uint16:
+            im[:, :, 0] = _clahe_channel_u16(im[:, :, 0], clahe, bit_depth)
+        else:
+            im[:, :, 0] = clahe.apply(im[:, :, 0])
     elif im.dtype == np.uint8:
         # LAB-space CLAHE for color images preserves hue/saturation
         lab = cv2.cvtColor(im, cv2.COLOR_BGR2LAB)
@@ -41,7 +72,7 @@ def apply_clahe(im: np.ndarray, clip_limit: float = 2.0, tile_size: int = 8, bit
     else:
         # uint16 multi-channel: per-channel CLAHE (LAB not supported at uint16)
         for i in range(c):
-            im[:, :, i] = clahe.apply(im[:, :, i])
+            im[:, :, i] = _clahe_channel_u16(im[:, :, i], clahe, bit_depth)
 
     return im
 
